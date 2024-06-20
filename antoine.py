@@ -60,6 +60,7 @@ gases["SO2"] = {
             ],
     "T_crit": 430.34, 
     "T_trip": 197.64, 
+    "h_vap":  24.9,     # kJ/mol
 }
 
 gases["N2O"] = {
@@ -69,6 +70,37 @@ gases["N2O"] = {
             ],
     "T_crit": 309.56, 
     "T_trip": 182.33, 
+    "h_vap":  16.5,     # kJ/mol
+}
+
+gases["O2"] = {
+    "cite": ["Brower and Thodos, 1968","Pentermann and Wagner, 1978	","Henning and Otto, 1936"],
+    "fit":  [   
+                [ 54.36, 3.9523, 340.024, -4.144],
+            ],
+    "T_crit": 154.58, 
+    "T_trip": 54.33, 
+}
+
+gases["H2S"] = {
+    "cite": ["Stull, 1947","Cubitt, Henderson, et al., 1987","Goodwin, 1983"],
+    "fit":  [   
+                [ 138.8 , 4.43681,  829.439, -25.412],
+                [ 212.8 , 4.52887,  958.587, -0.539]
+            ],
+    "T_crit": 373.3, 
+    "T_trip": 187.66, 
+    "h_vap" : 19.5,
+}
+
+gases["O3"] = {
+    "cite": ["Stull, 1947","airliquide.com","Jenkins and Birdsall, 1952	"],
+    "fit":  [   
+                [ 92.8,	4.23637,	712.487,	6.982],
+            ],
+    "T_crit": 261.15, 
+    "T_trip": 80.15, 
+    "h_vap" : 138.4694,
 }
 
 
@@ -91,4 +123,4 @@ def evaluate(t,gas_dict):
     if len(A) == 0:
         return 0.0
 
-    return 10**( A[0] - (A[1]/(t+A[2])) ) * 1e-5  # Pa
+    return 10**( A[0] - (A[1]/(t+A[2])) ) * 1e5  # Pa
