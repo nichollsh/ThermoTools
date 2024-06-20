@@ -2,4 +2,4 @@ dat
 plt
 web
 .vscode
-
+__pycache__
