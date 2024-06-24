@@ -1,4 +1,9 @@
 import numpy as np
+import os 
+from scipy.interpolate import PchipInterpolator
+from scipy.integrate import quad
+
+import moles
 
 # Antoine equation: fit for Psat as a function of temperature
 
@@ -7,7 +12,7 @@ import numpy as np
 gases = {}
 
 gases["NH3"] = {
-    "cite": ["Stull 1947", "Brunner 1988"],
+    "cite": ["Stull 1947", "Brunner 1988", "Overstreet and Giauque, 1937"],
     "fit":  [   
                 [164.0,    3.18757,    506.713,     -80.78],    # T_min, A, B, C
                 [239.6,    4.86886,    1113.928,    -10.409]    # ^
@@ -17,7 +22,7 @@ gases["NH3"] = {
 }
 
 gases["CO2"] = {
-    "cite": ["Giauque and Egan, 1937", "Suehiro et al. 1996", "Marsh 1987"],
+    "cite": ["Giauque and Egan, 1937", "Suehiro et al. 1996", "Marsh 1987","Stephenson and Malanowski, 1987"],
     "fit":  [   
                 [154.26,    6.81228,    1301.679,   -3.494]
             ],
@@ -26,7 +31,7 @@ gases["CO2"] = {
 }
 
 gases["CH4"] = {
-    "cite": ["Prydz and Goodwin 1972"],
+    "cite": ["Prydz and Goodwin 1972","Stephenson and Malanowski, 1987"],
     "fit":  [  
                 [ 90.99, 3.9895, 443.028, -0.49]
             ],
@@ -50,6 +55,7 @@ gases["N2"] = {
             ],
     "T_crit": 126.19, 
     "T_trip": 63.14	, 
+    "h_vap": 6.1,   
 }
 
 gases["SO2"] = {
@@ -60,7 +66,6 @@ gases["SO2"] = {
             ],
     "T_crit": 430.34, 
     "T_trip": 197.64, 
-    "h_vap":  24.9,     # kJ/mol
 }
 
 gases["N2O"] = {
@@ -70,7 +75,6 @@ gases["N2O"] = {
             ],
     "T_crit": 309.56, 
     "T_trip": 182.33, 
-    "h_vap":  16.5,     # kJ/mol
 }
 
 gases["O2"] = {
@@ -79,7 +83,7 @@ gases["O2"] = {
                 [ 54.36, 3.9523, 340.024, -4.144],
             ],
     "T_crit": 154.58, 
-    "T_trip": 54.33, 
+    "T_trip": 54.33,
 }
 
 gases["H2S"] = {
@@ -90,7 +94,6 @@ gases["H2S"] = {
             ],
     "T_crit": 373.3, 
     "T_trip": 187.66, 
-    "h_vap" : 19.5,
 }
 
 gases["O3"] = {
@@ -100,7 +103,6 @@ gases["O3"] = {
             ],
     "T_crit": 261.15, 
     "T_trip": 80.15, 
-    "h_vap" : 138.4694,
 }
 
 
@@ -109,7 +111,8 @@ for k in gases.keys():
     gases[k]["cite"].append("P.J. Linstrom and W.G. Mallard, Eds., NIST Chemistry WebBook, NIST Standard Reference Database Number 69")
 
 
-def evaluate(t,gas_dict):
+def antoine(t:float,gas:str):
+    gas_dict = gases[gas]
     fit = gas_dict["fit"]
 
     A = []
@@ -118,9 +121,36 @@ def evaluate(t,gas_dict):
         if t > t_min:
             A = [f[1],f[2],f[3]]
 
-    # zero saturation pressure at low temperatures
-    # requires the gas to condense/solidify
     if len(A) == 0:
-        return 0.0
+        raise Exception("Temperature out of range")
 
     return 10**( A[0] - (A[1]/(t+A[2])) ) * 1e5  # Pa
+
+
+# find reference temperature & pressure using Antoine equation
+def reference_point(gas:str):
+    t_ref = gases[gas]["fit"][0][0] + 20.0
+    p_ref = antoine(t_ref, gas)
+    return t_ref, p_ref 
+
+# calculate saturation pressure using Clausius-Clapeyron
+def cc_psat(t:float, gas:str, mmw:float):
+
+    # find l_vap data
+    fname = "lv/dat/%s.csv"%gas
+    t_ref, p_ref = reference_point(gas)
+    data = np.loadtxt(fname, delimiter=',').T
+    vap_T = data[0]
+    vap_L = data[1] * mmw  # convert to J/mol 
+
+    itp = PchipInterpolator(vap_T, vap_L)
+
+    def integrand(t:float):
+        L = itp(t)
+        return L / (8.314 * t * t)
+    
+    integ = quad(integrand, t_ref, t)
+    rhs = integ[0]
+    out = np.exp(rhs) * p_ref 
+    return out 
+

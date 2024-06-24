@@ -26,8 +26,6 @@ def read_elements():
         # store 
         elem[k] = v
 
-    print(elem)
-
     head = "Symbol , Mass [kg mol-1]"
     X = []
     X_dict = {}
@@ -88,7 +86,7 @@ def count_atoms(m:str):
         return out 
 
 # Calculate mmw from formula
-def from_formula(m:str, elem_table:dict):
+def mmw_from_formula(m:str, elem_table:dict):
 
     # get atoms 
     atoms = count_atoms(m)
