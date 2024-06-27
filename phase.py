@@ -105,6 +105,25 @@ gases["O3"] = {
     "T_trip": 80.15, 
 }
 
+gases["HCN"] = {
+    "cite": ["Sinozaki, Hara, et al., 1926", "Giauque and Ruehrwein, 1939", "https://cameochemicals.noaa.gov/chris/HCN.pdf"],
+    "fit":  [   
+                [ 256.73,	4.67417,	1340.791,	-11.592],
+            ],
+    "T_crit": 456.7, 
+    "T_trip":259.86, 
+}
+
+gases["SiH4"] = {
+    "cite": ["Stull, 1947","airliquide.com"],
+    "fit":  [   
+                [ 93.8 ,	4.22228,	703.987,	5.352],
+            ],
+    "T_crit": 269.7, 
+    "T_trip":88.48, 
+}
+
+
 
 
 for k in gases.keys():
