@@ -32,5 +32,9 @@ issues = "https://github.com/nichollsh/ThermoTools/issues"
 changelog = "https://github.com/nichollsh/ThermoTools/releases"
 
 [tool.setuptools]
+py-modules = ['thermotools']
 package-dir = {"thermotools" = "src/thermotools" }
 include-package-data = true
+
+[tool.setuptools.package-data]
+thermotools = ['data/*']
