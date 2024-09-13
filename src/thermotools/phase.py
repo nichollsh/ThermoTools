@@ -3,7 +3,7 @@ import os
 from scipy.interpolate import PchipInterpolator
 from scipy.integrate import quad
 
-import moles
+import thermotools.moles as moles
 
 # Antoine equation: fit for Psat as a function of temperature
 
@@ -124,11 +124,8 @@ gases["SiH4"] = {
 }
 
 
-
-
 for k in gases.keys():
     gases[k]["cite"].append("P.J. Linstrom and W.G. Mallard, Eds., NIST Chemistry WebBook, NIST Standard Reference Database Number 69")
-
 
 def antoine(t:float,gas:str):
     gas_dict = gases[gas]

@@ -3,4 +3,5 @@ plt
 .vscode
 __pycache__
 nogit*
+*.egg-info
 

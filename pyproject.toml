@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "thermotools"
+version = "0.1.0"
+description = "Download, process, and compile thermodynamic data"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+	{name = "Harrison Nicholls, email = harrison.nicholls@physics.ox.ac.uk"},
+]
+keywords = [
+    "Astronomy",
+    "Gas",
+    "Thermodynamics",
+    "Physics"
+]
+license = {text = "BSD-3-Clause-Clear license"}
+dependencies = [
+    "matplotlib",
+    "netCDF4",
+    "numpy",
+    "scipy",
+    "requests"
+]
+
+[project.urls]
+homepage = "https://github.com/nichollsh/ThermoTools"
+issues = "https://github.com/nichollsh/ThermoTools/issues"
+changelog = "https://github.com/nichollsh/ThermoTools/releases"
+
+[tool.setuptools]
+package-dir = {"thermotools" = "src/thermotools" }
+include-package-data = true
