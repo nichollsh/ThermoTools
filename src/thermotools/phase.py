@@ -1,8 +1,9 @@
 import numpy as np
-import os 
 from scipy.interpolate import PchipInterpolator
 from scipy.integrate import quad
+import os
 
+from thermotools import get_data
 import thermotools.moles as moles
 
 # Antoine equation: fit for Psat as a function of temperature
@@ -153,7 +154,7 @@ def reference_point(gas:str):
 def cc_psat(t:float, gas:str, mmw:float):
 
     # find l_vap data
-    fname = "lv/dat/%s.csv"%gas
+    fname = os.path.join(get_data(),"lv","dat")+"/%s.csv"%gas
     t_ref, p_ref = reference_point(gas)
     data = np.loadtxt(fname, delimiter=',').T
     vap_T = data[0]

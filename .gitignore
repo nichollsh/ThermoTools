@@ -1,7 +1,8 @@
-dat
-plt
 .vscode
 __pycache__
 nogit*
 *.egg-info
 
+src/thermotools/data/cp/web
+src/thermotools/data/*/dat
+src/thermotools/data/*/plt

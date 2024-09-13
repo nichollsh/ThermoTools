@@ -8,7 +8,12 @@ tables.
 * Calculating enthalpy of phase change for many gases
 * Compilation of thermodynamic properties into a single file (per gas)
 
-Sources:
+### Setup
+
+Simply run `pip install -e .` in your terminal, then use the notebooks.
+
+### Sources
+
 * NIST Webbook - https://webbook.nist.gov/
 * JANAF Tables (Chase et al., 1985) - https://janaf.nist.gov/
 * IAPWS95 / Wagner & Pruß (2002) - https://pubs.aip.org/aip/jpr/article/31/2/387/241937/The-IAPWS-Formulation-1995-for-the-Thermodynamic
