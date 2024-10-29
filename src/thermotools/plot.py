@@ -1,6 +1,6 @@
 import matplotlib as mpl
 
-font = {'family' : 'serif',
+font = {'family' : 'sans',
         'size'   : 12}
 
 mpl.rc('font', **font)
