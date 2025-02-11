@@ -1,12 +1,12 @@
 import numpy as np
 import os
-from thermotools import get_data, empty_dir
+from thermotools import get_inpdir, empty_dir
 
 def formula_from_path(f:str):
     return f.split("/")[-1].split(".")[0]
 
 def read_elements():
-    fpath = os.path.join(get_data(),"mmw","web","elements.txt")
+    fpath = os.path.join(get_inpdir(),"mmw","web","elements.txt")
 
     with open(fpath,'r') as hdl:
         lines = hdl.readlines()
@@ -37,7 +37,7 @@ def read_elements():
         X.append([k,"%.9e"%mu])
         X_dict[k] = mu
 
-    datdir = os.path.join(get_data(),"mmw","dat")
+    datdir = os.path.join(get_inpdir(),"mmw","dat")
     empty_dir(datdir)
     np.savetxt(os.path.join(datdir,"elements.csv"),X,fmt=["%s","%s"],delimiter=',',header=head)
 

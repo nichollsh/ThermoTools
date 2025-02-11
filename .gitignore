@@ -3,6 +3,4 @@ __pycache__
 nogit*
 *.egg-info
 
-src/thermotools/data/cp/web
-src/thermotools/data/*/dat
-src/thermotools/data/*/plt
+generated/*/
