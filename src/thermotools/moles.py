@@ -6,6 +6,7 @@ def formula_from_path(f:str):
     return f.split("/")[-1].split(".")[0]
 
 def read_elements():
+    # Read table of molecular weights [kg/mol]
     fpath = os.path.join(get_inpdir(),"mmw","web","elements.txt")
 
     with open(fpath,'r') as hdl:
