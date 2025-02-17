@@ -1,6 +1,7 @@
 import tarfile
 import zipfile
 import requests
+import os
 
 # https://stackoverflow.com/a/53101953
 def download(url, fpath):
@@ -23,4 +24,14 @@ def unzip(fpath, dpath):
     with zipfile.ZipFile(fpath,"r") as hdl:
         hdl.extractall(dpath)
     print("    Done")
+
+def makezip(zpath, files):
+    print("Zipping to "+zpath)
+    if os.path.exists(zpath):
+        print("    removing old zip file")
+        os.remove(zpath)
+    with zipfile.ZipFile(zpath, 'w', zipfile.ZIP_DEFLATED) as hdl:
+        for f in files:
+            hdl.write(f, arcname=os.path.basename(f))
+    print("Done")
 
