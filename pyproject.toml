@@ -15,7 +15,8 @@ keywords = [
     "Astronomy",
     "Gas",
     "Thermodynamics",
-    "Physics"
+    "Physics",
+    "Chemistry"
 ]
 license = {text = "BSD-3-Clause-Clear license"}
 dependencies = [
