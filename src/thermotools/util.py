@@ -2,6 +2,23 @@ import tarfile
 import zipfile
 import requests
 import os
+import hashlib
+
+# Calculate the checksum of a file using the BLAKE2b algorithm
+def checksum(filename:str):
+    # Adapted from https://stackoverflow.com/a/1131238
+    with open(filename, "rb") as hdl:
+        file_hash = hashlib.blake2b()
+        while chunk := hdl.read(8192):
+            file_hash.update(chunk)
+    return file_hash.hexdigest()
+
+# Write checksum for a file
+def writesum(filename:str):
+    chkpath = filename+".chk"
+    print("    checksum: %s"%chkpath)
+    with open(chkpath, "w") as hdl:
+       hdl.write("%s \n"%checksum(filename))
 
 # https://stackoverflow.com/a/53101953
 def download(url, fpath):
@@ -16,7 +33,7 @@ def download(url, fpath):
 def untar(fpath, dpath):
     print("Untarring "+fpath)
     with tarfile.open(fpath)  as hdl:
-        hdl.extractall(dpath) 
+        hdl.extractall(dpath)
     print("    Done")
 
 def unzip(fpath, dpath):
