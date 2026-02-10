@@ -22,6 +22,7 @@ Simply run `pip install -e .` in your terminal, then use the `workflow/` noteboo
 * AQUA water equation of state - https://www.aanda.org/articles/aa/abs/2020/11/aa38367-20/aa38367-20.html 
 * CMS19 hydrogen equation of state - https://iopscience.iop.org/article/10.3847/1538-4357/aaf99f
 * Van der Waals coefficients - https://en.wikipedia.org/wiki/Van_der_Waals_constants_(data_page)
+* https://en.wikipedia.org/wiki/Critical_points_of_the_elements_(data_page)?useskin=vector
 * Others documented in code
 
 Copyright (c) 2025 Harrison Nicholls, under The Clear BSD License.

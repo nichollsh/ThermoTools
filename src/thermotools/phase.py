@@ -4,12 +4,9 @@ from scipy.integrate import quad
 import os
 
 from thermotools import get_gendir
-import thermotools.moles as moles
 
 # Antoine equation: fit for Psat as a function of temperature
-
 # Most of these values taken from NIST Webbook
-
 gases = {}
 
 gases["NH3"] = {
@@ -20,6 +17,7 @@ gases["NH3"] = {
             ],
     "T_crit": 405.4,  
     "T_trip": 195.4,
+    "prefer": "cc",
 }
 
 gases["CO2"] = {
@@ -29,6 +27,7 @@ gases["CO2"] = {
             ],
     "T_crit": 304.18, 
     "T_trip": 216.58, 
+    "prefer": "antoine",
 }
 
 gases["CH4"] = {
@@ -37,7 +36,8 @@ gases["CH4"] = {
                 [ 90.99, 3.9895, 443.028, -0.49]
             ],
     "T_crit": 190.6, 
-    "T_trip": 90.67,
+    "T_trip": 90.67, 
+    "prefer": "cc",
 }
 
 gases["H2"] = {
@@ -47,6 +47,7 @@ gases["H2"] = {
             ],
     "T_crit": 33.18, 
     "T_trip": 13.95,
+    "prefer": "cc",
 }
 
 gases["N2"] = {
@@ -56,7 +57,8 @@ gases["N2"] = {
             ],
     "T_crit": 126.19, 
     "T_trip": 63.14	, 
-    "h_vap": 6.1,   
+    "h_vap": 6.1, 
+    "prefer": "cc",  
 }
 
 gases["SO2"] = {
@@ -67,6 +69,7 @@ gases["SO2"] = {
             ],
     "T_crit": 430.34, 
     "T_trip": 197.64, 
+    "prefer": "cc",
 }
 
 gases["N2O"] = {
@@ -76,6 +79,7 @@ gases["N2O"] = {
             ],
     "T_crit": 309.56, 
     "T_trip": 182.33, 
+    "prefer": "antoine",
 }
 
 gases["O2"] = {
@@ -85,6 +89,7 @@ gases["O2"] = {
             ],
     "T_crit": 154.58, 
     "T_trip": 54.33,
+    "prefer": "cc",
 }
 
 gases["H2S"] = {
@@ -95,6 +100,7 @@ gases["H2S"] = {
             ],
     "T_crit": 373.3, 
     "T_trip": 187.66, 
+    "prefer": "antoine",
 }
 
 gases["O3"] = {
@@ -104,6 +110,7 @@ gases["O3"] = {
             ],
     "T_crit": 261.15, 
     "T_trip": 80.15, 
+    "prefer": "antoine",
 }
 
 gases["HCN"] = {
@@ -113,6 +120,7 @@ gases["HCN"] = {
             ],
     "T_crit": 456.7, 
     "T_trip":259.86, 
+    "prefer": "cc",
 }
 
 gases["SiH4"] = {
@@ -122,8 +130,38 @@ gases["SiH4"] = {
             ],
     "T_crit": 269.7, 
     "T_trip":88.48, 
+    "prefer": "antoine",
 }
 
+gases["Na"] = {
+    "cite": ["Rodebush and Walters, 1930"],
+    "fit":  [   
+                [ 924.0 ,	2.46077,	1873.728,	-416.372],
+            ],
+    "T_crit": 2573.0, 
+    "T_trip":370.98, 
+    "prefer": "antoine",
+}
+
+gases["K"] = {
+    "cite": ["Fiock and Rodebush, 1926"],
+    "fit":  [   
+                [679.4, 4.45718, 4691.58, 24.195], 
+            ],
+    "T_crit": 2223, 
+    "T_trip":336.35, 
+    "prefer": "antoine",
+}
+
+gases["Ca"] = {
+    "cite": ["Hartmann and Schneider, 1929"],
+    "fit":  [   
+                [1254.0,	2.78473,	3121.368,	-594.591], 
+            ],
+    "T_crit": 5000.0, # not known?
+    "T_trip":1112.9, 
+    "prefer": "antoine",
+}
 
 for k in gases.keys():
     gases[k]["cite"].append("P.J. Linstrom and W.G. Mallard, Eds., NIST Chemistry WebBook, NIST Standard Reference Database Number 69")
