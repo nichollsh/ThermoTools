@@ -10,7 +10,7 @@ Includes tools for:
 
 ### Setup
 
-Simply run `pip install -e .` in your terminal, then use the `workflow/` notebooks in order.
+Simply run `pip install -Ue .` in your terminal, then use the `workflow/` notebooks in order.
 
 ### Sources
 
@@ -25,4 +25,4 @@ Simply run `pip install -e .` in your terminal, then use the `workflow/` noteboo
 * https://en.wikipedia.org/wiki/Critical_points_of_the_elements_(data_page)?useskin=vector
 * Others documented in code
 
-Copyright (c) 2025 Harrison Nicholls, under The Clear BSD License.
+Copyright (c) 2026 Harrison Nicholls, under the Apache 2.0 License.
