@@ -23,6 +23,7 @@ Simply run `pip install -Ue .` in your terminal, then use the `workflow/` notebo
 * CMS19 hydrogen equation of state - https://iopscience.iop.org/article/10.3847/1538-4357/aaf99f
 * Van der Waals coefficients - https://en.wikipedia.org/wiki/Van_der_Waals_constants_(data_page)
 * https://en.wikipedia.org/wiki/Critical_points_of_the_elements_(data_page)?useskin=vector
+* Wotike et al. (2017) - https://arxiv.org/pdf/1712.01010
 * Others documented in code
 
-Copyright (c) 2026 Harrison Nicholls, under the Apache 2.0 License.
+Copyright (c) 2026 Harrison Nicholls. Made available under the Apache 2.0 License.
