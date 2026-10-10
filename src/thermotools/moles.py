@@ -70,13 +70,16 @@ def count_atoms(m:str):
 
             last = (i == nchar-1)
 
-            # get count 
+            # get count
             if count == 0:   # expecting number
-                # number of atoms 
-                if last or m[i+1].isalpha(): # got letter => count=1
+                # number of atoms, which may have multiple digits
+                j = i+1
+                while (j < nchar) and m[j].isdigit():
+                    j += 1
+                if j == i+1: # got letter => count=1
                     count = 1
                 else:
-                    count = int(m[i+1]) 
+                    count = int(m[i+1:j])
 
                 # repeated element 
                 if e in out.keys():
