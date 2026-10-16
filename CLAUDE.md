@@ -60,6 +60,14 @@ like `generated/sat/dat/` and `generated/sat/plt/` (saturation curve data/plots)
   effect — printed gas list on import) and `woitke_psat()` dispatches to one of ~10 fit-type
   equations (`match gas_data["fit_type"]`) drawn from various literature sources. Gases already
   covered by the Antoine/CC `gases` dict are skipped when loading Woitke data to avoid duplicates.
+  Rows are matched on the exact formula (the part before `[s]`/`[l]`); `woitke_overrides` patches
+  temperature ranges (e.g. SiO is capped at the top of its measured range).
+  Separately again, the `condensates` dict covers condensates with Woitke ΔG fits (types 2 and 5,
+  which `woitke_load_gas()` skips), mostly minerals with no gas-phase molecule (MgSiO3, Mg2SiO4, ...).
+  `condensate_psat()` assumes congruent vaporisation into fixed stoichiometric `products` (e.g.
+  Mg2SiO4 -> 2 Mg + SiO + 1.5 O2), using JANAF gas data from `generated/cp/web/`; `99_compile` gives
+  these files the molecular weight and heat capacity of that vapour mixture. Their ΔG coefficients
+  are hardcoded at full precision, because `woitke2017_TableD2.csv` is rounded to 3-4 significant figures.
 - `src/thermotools/water.py` — water-specific IAPWS95/Wagner & Pruß (2002) correlations
   (`psat_liquid`, `psat_solid`, `psat_both`, `rho_liq`, `rho_vap`, `delta_vap`) plus a tabulated
   sublimation enthalpy curve (`delta_sub`, PCHIP-interpolated) for temperatures below the triple
@@ -79,6 +87,9 @@ When adding a new species' saturation pressure fit, decide which mechanism it be
   want Clausius-Clapeyron integration from latent-heat data — set `"prefer"` to pick which.
 - Otherwise it may already be covered by Woitke+2017 Table D2 (`woitke_load_all()` loads anything
   not already in `gases`); check `woitke_gases` before adding a manual fit.
+- For a condensate with only a Woitke ΔG fit, add it to `condensates` in `phase.py`, choosing
+  `products` so that the other gases made of the same elements are a small fraction of the vapour
+  (record that neglected fraction in the comment), and taking `T_melt`/`T_max` from its JANAF (cr,l) table.
 
 Fit coefficients and citations are hardcoded inline (not in a data file) in `phase.py` — always
 cite the literature source in the `"cite"` list when adding a new gas.

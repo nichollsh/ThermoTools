@@ -796,14 +796,14 @@ def woitke_load_gas(gas:str):
     fname = os.path.join(get_inpdir(),"psat","web", "woitke2017_TableD2.csv")
     data = np.loadtxt(fname, delimiter=',', dtype=str, comments='#', skiprows=1).T
 
-    # locate row for this gas
+    # locate row for this gas, matching the formula exactly (e.g. "SiO" must not match "Mg2SiO4[s]")
     igas = -1
     for i,g in enumerate(data[1]):
-        if gas in g:
+        if str(g).split("[")[0] == gas:
             print("Querying Woitke+2017 phase change data for %s"%gas)
             if igas>-1:
                 print(f"    multiple entries for {gas}, found: {data[1][igas]} and {data[1][i]}")
-                if "[s" in data[2][i]:
+                if ("[s" in data[1][i]) and ("[s" not in data[1][igas]):
                     igas = i
             else:
                 igas = i
@@ -862,7 +862,20 @@ def woitke_load_all():
                 parsed_data[gas] = gas_data
                 seen_gases.append(gas)
 
+    for gas, override in woitke_overrides.items():
+        if gas in parsed_data:
+            parsed_data[gas].update(override)
+
     return parsed_data
+
+# Corrections to the temperature ranges in Woitke+2017 Table D2, which doesn't give them for every fit
+woitke_overrides = {
+    # Gail, Wetzel, Pucci, and Tamanai (2013, A&A 555, A119, doi:10.1051/0004-6361/201321807)
+    #     fitted their Knudsen-cell measurements of solid SiO over 1275-1525 K (their Sect. 2).
+    #     Their fit is meant to be extrapolated to lower temperatures (their Sect. 1), so we only cap T_max.
+    #     Solid SiO is metastable (it tends to disproportionate into Si + SiO2), so don't extend this lightly.
+    "SiO": {"T_max": 1525.0},
+}
 
 # load the data globally
 woitke_data = woitke_load_all()
@@ -955,4 +968,209 @@ def woitke_psat(t:float, gas:str):
         
         case _:
             raise Exception("Woitke+2017 fit type %d not yet implemented"%gas_data["fit_type"])
-        
+
+
+# Condensates whose vapour pressure is computed from their Gibbs energy of formation,
+#     using the Woitke+2017 Table D2 fits of type 2 (dG [J/mol] = c0/T + c1 + c2 T + c3 T^2 + c4 T^3)
+#     and type 5 (-dG/RT = c0/T + c1 ln T + c2 + c3 T + c4 T^2), which give dG of the condensate from
+#     free atoms at 1 bar. Whichever of the solid and liquid fits is more stable is used.
+#     The coefficients are hardcoded here at the full precision of Woitke et al. (2018, A&A 614, A1)
+#     Table D.2, because those in data/psat/web/woitke2017_TableD2.csv are rounded to 3-4 significant
+#     figures. This rounding moves e.g. the Mg2SiO4 solid/liquid crossing from 2170 K to 2219 K.
+#
+#     Most of these have no gas-phase molecule. We assume they vaporise congruently by a single reaction
+#     into stoichiometric `products`, e.g. Mg2SiO4 -> 2 Mg + SiO + 3/2 O2, so the vapour has a fixed
+#     composition. The saturation pressure is the total pressure of this vapour in equilibrium with the
+#     pure condensate. The products are chosen as those that best describe the vapour, judged by the
+#     first-order partial pressures of all the other species in the JANAF tables made of the same
+#     elements. Their summed fraction of the vapour (the neglected fraction) is listed for each condensate,
+#     at 1000 / 2000 / 3000 K. For Mg2SiO4 the fixed-reaction total pressure is lower than that from a
+#     full equilibrium calculation by ~15% below 2500 K, ~20% at 3000 K, and ~40% at 4000 K.
+#     Where the products are just the gas molecule itself (CaO), this is the exact vapour pressure of
+#     that molecule, as for the other Woitke+2017 species.
+#
+#     The vapour products use the JANAF tables downloaded by 01_cp_download, in generated/cp/web/.
+#     T_melt and T_max come from the JANAF (cr,l) tables of the condensates: T_max is the upper limit
+#     of those tables, or the melting point if Woitke+2017 provide only a solid fit.
+#     T_min = 300 K throughout, because the fits diverge as T -> 0; the pressures there are ~1e-80 Pa.
+_cite_cond = ["Woitke et al. 2018, A&A 614, A1",
+              "M.W. Chase Jr., NIST-JANAF Thermochemical Tables, 4th ed., J. Phys. Chem. Ref. Data, Monograph 9 (1998)"]
+condensates = {
+    # neglected fraction 18 / 14 / 22%, mostly O. JANAF Mg-014
+    "MgSiO3": {
+        "products": {"Mg": 1.0, "SiO": 1.0, "O2": 1.0},
+        "fit_type": 2,
+        "fit": [[ 1.06060E+06, -2.90401E+06, 7.57655E+02, -1.37019E-02, 1.51773E-06],  # [s]
+                [ 2.94675E+06, -2.86104E+06, 7.52974E+02, -2.55722E-02, 2.36166E-06]], # [l]
+        "T_melt": 1850.0, "T_max": 3000.0,
+    },
+    # 19 / 15 / 24%, mostly O. JANAF Mg-030
+    "Mg2SiO4": {
+        "products": {"Mg": 2.0, "SiO": 1.0, "O2": 1.5},
+        "fit_type": 2,
+        "fit": [[ 1.70117E+06, -3.93154E+06, 1.04604E+03, -1.77300E-02, 7.18369E-07],
+                [ 3.26302E+06, -3.87698E+06, 1.03152E+03, -2.48587E-02, 1.67747E-06]],
+        "T_melt": 2171.0, "T_max": 4000.0,
+    },
+    # 6 / 5 / 10%, mostly SiO2 and O. JANAF K-016
+    "K2SiO3": {
+        "products": {"K": 2.0, "SiO": 1.0, "O2": 1.0},
+        "fit_type": 2,
+        "fit": [[ 1.08754E+06, -2.93466E+06, 8.61167E+02, -3.66511E-02, 3.06399E-06],
+                [-2.09568E+06, -2.87130E+06, 8.04917E+02, -3.03325E-02, 2.75492E-06]],
+        "T_melt": 1249.0, "T_max": 3000.0,
+    },
+    # 4 / 5 / 10%, mostly SiO2 and O. JANAF Na-018
+    "Na2SiO3": {
+        "products": {"Na": 2.0, "SiO": 1.0, "O2": 1.0},
+        "fit_type": 2,
+        "fit": [[ 1.31453E+06, -2.98538E+06, 8.76910E+02, -2.65571E-02, 1.15443E-06],
+                [ 1.72092E+06, -2.93824E+06, 8.49423E+02, -3.54866E-02, 3.74762E-06]],
+        "T_melt": 1362.0, "T_max": 2500.0,
+    },
+    # 0 / 0 / 4%, mostly S. JANAF Na-033; solid fit only
+    "Na2S": {
+        "products": {"Na": 2.0, "S2": 0.5},
+        "fit_type": 2,
+        "fit": [[ 1.99053E+06, -8.70027E+05, 4.06721E+02, -2.78298E-02, 0.00000E+00]],
+        "T_melt": 1445.0, "T_max": 1445.0,
+    },
+    # 0 / 0 / 2%, mostly S3. JANAF S-015
+    "SiS2": {
+        "products": {"SiS": 1.0, "S2": 0.5},
+        "fit_type": 2,
+        "fit": [[-1.96413E+05, -1.21744E+06, 4.29645E+02, -1.32885E-02, 9.27515E-07],
+                [ 5.45975E+05, -1.21556E+06, 4.34344E+02, -1.99379E-02, 2.31933E-06]],
+        "T_melt": 1363.0, "T_max": 2000.0,
+    },
+    # 4 / 5 / 26%, mostly O. JANAF O-091
+    "Ti4O7": {
+        "products": {"TiO2": 3.0, "TiO": 1.0},
+        "fit_type": 2,
+        "fit": [[ 1.85821E+06, -7.06188E+06, 1.70429E+03, -4.67044E-02, 4.71514E-06],
+                [ 5.06384E+06, -6.89199E+06, 1.64108E+03, -5.93652E-02, 4.64893E-06]],
+        "T_melt": 1950.0, "T_max": 4000.0,
+    },
+    # 4 / 27 / 25%, mostly O2. JANAF Mg-017
+    "MgTiO3": {
+        "products": {"Mg": 1.0, "TiO2": 1.0, "O": 1.0},
+        "fit_type": 2,
+        "fit": [[ 8.18358E+05, -2.94809E+06, 7.57824E+02, -1.56613E-02, 1.01510E-06],
+                [ 2.95447E+06, -2.88536E+06, 7.40614E+02, -2.52836E-02, 1.86167E-06]],
+        "T_melt": 1953.0, "T_max": 4000.0,
+    },
+    # 1 / 12 / 15%, mostly O2. JANAF Mg-024
+    "MgTi2O5": {
+        "products": {"Mg": 1.0, "TiO2": 2.0, "O": 1.0},
+        "fit_type": 2,
+        "fit": [[ 2.12742E+06, -4.86574E+06, 1.21637E+03, -2.34246E-02, 8.39658E-07],
+                [ 5.49485E+06, -4.75803E+06, 1.18602E+03, -4.08290E-02, 3.08428E-06]],
+        "T_melt": 1963.0, "T_max": 4000.0,
+    },
+    # 11 / 7 / 10%, mostly C. JANAF C-109
+    "TiC": {
+        "products": {"Ti": 1.0, "C3": 1.0/3.0},
+        "fit_type": 2,
+        "fit": [[ 1.11878E+05, -1.37612E+06, 3.20666E+02, -4.63379E-03, 1.85306E-07],
+                [ 5.34201E+05, -1.30289E+06, 3.01268E+02, -6.61621E-03, 5.21065E-07]],
+        "T_melt": 3290.0, "T_max": 4500.0,
+    },
+    # 1 / 4 / 10%, mostly V. JANAF O-064; solid fit only
+    "V2O3": {
+        "products": {"VO": 1.0, "VO2": 1.0},
+        "fit_type": 5,
+        "fit": [[ 3.59474E+05, -4.09857E+00, -6.48556E+01, 4.73778E-03, -3.36133E-07]],
+        "T_melt": 2340.0, "T_max": 2340.0,
+    },
+    # 1 / 2 / 4%, mostly O. JANAF O-075; solid fit only
+    "V2O4": {
+        "products": {"VO2": 1.0, "VO": 1.0, "O2": 0.5},
+        "fit_type": 5,
+        "fit": [[ 4.14455E+05, -2.22575E+00, -9.36637E+01, 3.73856E-03, -2.64367E-07]],
+        "T_melt": 1818.0, "T_max": 1818.0,
+    },
+    # vapour pressure of the CaO molecule. JANAF Ca-029
+    "CaO": {
+        "products": {"CaO": 1.0},
+        "fit_type": 2,
+        "fit": [[-4.94275E+04, -1.06229E+06, 2.81700E+02, -7.00317E-03, 4.60182E-07],
+                [ 7.88379E+05, -9.87984E+05, 2.61388E+02, -8.44845E-03, 6.19197E-07]],
+        "T_melt": 3200.0, "T_max": 4500.0,
+    },
+}
+for k in condensates.keys():
+    condensates[k]["cite"] = list(_cite_cond)
+    condensates[k]["T_min"] = 300.0
+
+_janaf_cache = {}
+def _janaf_dG_atoms(formula:str):
+    # Gibbs energy of formation of a gas from free atoms at 1 bar [J/mol], tabulated from JANAF
+    if formula in _janaf_cache:
+        return _janaf_cache[formula]
+    from thermotools.moles import count_atoms
+
+    def _read(atoms):
+        # JANAF file names list elements alphabetically, each with a count
+        name = "".join("%s%d"%(e, atoms[e]) for e in sorted(atoms.keys()))
+        fpath = os.path.join(get_gendir(), "cp", "web", name+".txt")
+        T, G = [], []
+        with open(fpath, 'r') as hdl:
+            for line in hdl.readlines()[3:]:
+                cols = line.split("\t")
+                try:
+                    t, g = float(cols[0]), float(cols[6])*1e3
+                except (ValueError, IndexError):
+                    continue
+                T.append(t)
+                G.append(g)
+        return np.array(T), np.array(G)
+
+    atoms = count_atoms(formula)
+    T, G = _read(atoms)
+    for e, n in atoms.items():
+        T_e, G_e = _read({e:1})
+        G = G - n * np.interp(T, T_e, G_e)  # same temperature grid, so element reference states cancel
+    _janaf_cache[formula] = (T, G)
+    return T, G
+
+def condensate_dG(t, gas:str):
+    # Gibbs energy of formation of the most stable condensed phase from free atoms at 1 bar [J/mol]
+    cdict = condensates[gas]
+    t = np.asarray(t, dtype=float)
+    dG = []
+    for c in cdict["fit"]:
+        match cdict["fit_type"]:
+            case 2:
+                dG.append(c[0]/t + c[1] + c[2]*t + c[3]*t**2 + c[4]*t**3)
+            case 5:
+                dG.append(-8.314462618 * t * (c[0]/t + c[1]*np.log(t) + c[2] + c[3]*t + c[4]*t**2))
+            case _:
+                raise Exception("Woitke+2017 fit type %d not implemented for condensates"%cdict["fit_type"])
+    return np.amin(dG, axis=0)
+
+def condensate_psat(t, gas:str):
+    # saturation pressure [Pa] of the vapour over a pure condensate, see `condensates` above
+    cdict = condensates[gas]
+    t = np.asarray(t, dtype=float)
+    if np.any(t < cdict["T_min"]) or np.any(t > cdict["T_max"]):
+        raise Exception("Temperature out of range for %s: [%g, %g] K"%(gas, cdict["T_min"], cdict["T_max"]))
+
+    # vapour products, from free atoms
+    nu = np.array(list(cdict["products"].values()))
+    dG_prod = np.array([np.interp(t, *_janaf_dG_atoms(p)) for p in cdict["products"].keys()])
+
+    # equilibrium constant [bar^sum(nu)] for  condensate -> products
+    ln_K = -(np.dot(nu, dG_prod) - condensate_dG(t, gas)) / (8.314462618 * t)
+
+    # partial pressures p_i = x_i P, with fixed mole fractions x_i = nu_i / sum(nu)
+    x = nu / np.sum(nu)
+    ln_P = (ln_K - np.sum(nu * np.log(x))) / np.sum(nu)
+    return np.exp(ln_P) * bar  # Pa
+
+def condensate_vapour(gas:str, elem_table:dict):
+    # mole fractions and mean molar mass [kg/mol] of the vapour over a condensate
+    from thermotools.moles import mmw_from_formula
+    nu = condensates[gas]["products"]
+    x = {p: n/sum(nu.values()) for p,n in nu.items()}
+    mmw = sum(x[p] * mmw_from_formula(p, elem_table) for p in x)
+    return x, mmw

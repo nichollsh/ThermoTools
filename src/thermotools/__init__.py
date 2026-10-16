@@ -1,6 +1,7 @@
 import os
-import glob
 import shutil
+
+__version__ = "0.5.0"
 
 # https://stackoverflow.com/a/5423147
 _ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__),"../","../"))
